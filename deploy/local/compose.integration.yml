@@ -1,0 +1,116 @@
+# Test-only entrypoints redirect the actual provider SDKs to the local fixture.
+services:
+  java-backend:
+    labels:
+      lux.integration.owner: ${LUX_INTEGRATION_OWNER:?}
+    environment:
+      LUX_DB_URL: jdbc:mysql://mysql:3306/${LUX_BACKEND_DATABASE:?}?connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true
+      LUX_DB_USER: root
+      LUX_DB_PASSWORD: ${LUX_MYSQL_PASSWORD:?}
+      LUX_BYTEPLUS_GENERATION_ENABLED: "true"
+      SPRING_KAFKA_CONSUMER_GROUP_ID: lux-process-java-${LUX_INTEGRATION_OWNER:?}
+    depends_on:
+      integration-init:
+        condition: service_completed_successfully
+  agent:
+    labels:
+      lux.integration.owner: ${LUX_INTEGRATION_OWNER:?}
+    command: [python, /opt/lux-integration/process_acceptance.py, agent, --config, /opt/lux-config/process.json, --bind-address, 0.0.0.0]
+    volumes:
+      - ${LUX_INTEGRATION_SCRIPTS:?}:/opt/lux-integration:ro
+      - integration-config:/opt/lux-config:ro
+    environment:
+      LUX_AGENT_STORE: /var/lib/lux-agent/agent.db
+      LUX_KAFKA_GROUP_ID: lux-process-agent-${LUX_INTEGRATION_OWNER:?}
+      LUX_AGENT_MEDIA_OBSERVATION_ENABLED: "true"
+      LUX_AGENT_RECONCILIATION_ENABLED: "true"
+      LUX_AGENT_RECONCILIATION_TOKEN: ${LUX_OPERATOR_TOKEN:?}
+      LUX_AGENT_RECONCILIATION_OPERATOR: local-fixture-operator
+      LUX_AGENT_RECONCILIATION_ACCOUNTS: local-openai
+    depends_on:
+      integration-init:
+        condition: service_completed_successfully
+      fixture:
+        condition: service_healthy
+  model-connector:
+    labels:
+      lux.integration.owner: ${LUX_INTEGRATION_OWNER:?}
+    command: [python, /opt/lux-integration/process_acceptance.py, connector, --config, /opt/lux-config/process.json, --bind-address, 0.0.0.0]
+    volumes:
+      - ${LUX_INTEGRATION_SCRIPTS:?}:/opt/lux-integration:ro
+      - integration-config:/opt/lux-config:ro
+    environment:
+      LUX_CONNECTOR_MYSQL_DSN: mysql://root:${LUX_MYSQL_PASSWORD:?}@mysql:3306/${LUX_CONNECTOR_DATABASE:?}
+      LUX_CONNECTOR_KAFKA_GROUP_ID: lux-process-connector-${LUX_INTEGRATION_OWNER:?}
+      LUX_BYTEPLUS_API_KEY: offline-fixture-key
+      LUX_BYTEPLUS_ACCOUNT_REF: local-byteplus
+      LUX_CONNECTOR_PROVIDER_EXECUTION_ENABLED: "true"
+      LUX_CONNECTOR_PROVIDER_POLL_SECONDS: "0.1"
+      LUX_CONNECTOR_RECONCILIATION_ENABLED: "true"
+      LUX_CONNECTOR_RECONCILIATION_TOKEN: ${LUX_OPERATOR_TOKEN:?}
+      LUX_CONNECTOR_RECONCILIATION_OPERATOR: local-fixture-operator
+      LUX_CONNECTOR_RECONCILIATION_ACCOUNTS: local-byteplus
+    depends_on:
+      integration-init:
+        condition: service_completed_successfully
+      fixture:
+        condition: service_healthy
+  mysql:
+    labels:
+      lux.integration.owner: ${LUX_INTEGRATION_OWNER:?}
+    environment:
+      MYSQL_ROOT_HOST: "%"
+  kafka:
+    labels:
+      lux.integration.owner: ${LUX_INTEGRATION_OWNER:?}
+  seaweedfs:
+    labels:
+      lux.integration.owner: ${LUX_INTEGRATION_OWNER:?}
+  fixture:
+    image: lux-python-agent:local
+    user: "10001:10001"
+    command: [python, /opt/lux-integration/process_acceptance.py, fixture, --config, /opt/lux-config/process.json, --bind-address, 0.0.0.0]
+    labels:
+      lux.integration.owner: ${LUX_INTEGRATION_OWNER:?}
+    ports:
+      - 127.0.0.1:${LUX_FIXTURE_PORT:?}:8003
+    volumes:
+      - ${LUX_INTEGRATION_SCRIPTS:?}:/opt/lux-integration:ro
+      - integration-config:/opt/lux-config:ro
+    mem_limit: 192m
+    environment:
+      NO_PROXY: '*'
+      no_proxy: '*'
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8003/health',timeout=2)"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      integration-init:
+        condition: service_completed_successfully
+  integration-init:
+    image: lux-python-model-connector:local
+    user: "0:0"
+    command: [python, /opt/lux-integration/compose_acceptance.py, initialize, --source, /opt/lux-source, --destination, /opt/lux-config]
+    labels:
+      lux.integration.owner: ${LUX_INTEGRATION_OWNER:?}
+    volumes:
+      - ${LUX_INTEGRATION_SCRIPTS:?}:/opt/lux-integration:ro
+      - ${LUX_INTEGRATION_SOURCE:?}:/opt/lux-source:ro
+      - integration-config:/opt/lux-config
+    mem_limit: 192m
+    environment:
+      NO_PROXY: '*'
+      no_proxy: '*'
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_healthy
+volumes:
+  integration-config:
+    labels:
+      lux.integration.owner: ${LUX_INTEGRATION_OWNER:?}

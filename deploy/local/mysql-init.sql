@@ -1,0 +1,2 @@
+CREATE DATABASE IF NOT EXISTS lux_connector CHARACTER SET utf8mb4;
+GRANT ALL PRIVILEGES ON lux_connector.* TO 'lux'@'%';

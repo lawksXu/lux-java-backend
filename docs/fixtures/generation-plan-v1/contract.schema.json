@@ -1,0 +1,3814 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lux.invalid/contracts/generation-plan-v1.schema.json",
+  "title": "Lux Generation Plan Contract v1",
+  "description": "Design contract only. Structural validation does not execute Java domain rules. No concrete model capabilities are registered.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/GenerationPlan"
+    },
+    {
+      "$ref": "#/$defs/JavaPlanToolInvocation"
+    },
+    {
+      "$ref": "#/$defs/JavaPlanToolOperationReceipt"
+    },
+    {
+      "$ref": "#/$defs/ModelCatalogSnapshot"
+    },
+    {
+      "$ref": "#/$defs/NormalizedGenerationRequest"
+    }
+  ],
+  "$defs": {
+    "Uuid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "Instant": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?Z$"
+    },
+    "Sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "MediaType": {
+      "type": "string",
+      "enum": [
+        "IMAGE",
+        "VIDEO"
+      ]
+    },
+    "PlanState": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "FROZEN"
+      ]
+    },
+    "ImageMode": {
+      "const": "IMAGE"
+    },
+    "VideoMode": {
+      "const": "VIDEO"
+    },
+    "ImageOutputFormat": {
+      "type": "string",
+      "enum": [
+        "PNG",
+        "JPEG"
+      ]
+    },
+    "VideoOutputFormat": {
+      "type": "string",
+      "enum": [
+        "MP4",
+        "MOV"
+      ]
+    },
+    "ParameterKey": {
+      "type": "string",
+      "enum": [
+        "PROMPT",
+        "ASPECT_RATIO",
+        "RESOLUTION_ID",
+        "PIXEL_DIMENSIONS",
+        "REFERENCES",
+        "OUTPUT_FORMAT",
+        "DURATION_SECONDS",
+        "GENERATE_AUDIO"
+      ]
+    },
+    "AspectRatio": {
+      "type": "object",
+      "properties": {
+        "width_units": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "height_units": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "width_units",
+        "height_units"
+      ],
+      "additionalProperties": false
+    },
+    "PixelDimensions": {
+      "type": "object",
+      "properties": {
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "width",
+        "height"
+      ],
+      "additionalProperties": false
+    },
+    "RatioSize": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "ratio_size"
+        },
+        "aspect_ratio": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AspectRatio"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "resolution_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "aspect_ratio",
+        "resolution_id"
+      ],
+      "additionalProperties": false
+    },
+    "PixelSize": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "pixel_size"
+        },
+        "dimensions": {
+          "$ref": "#/$defs/PixelDimensions"
+        }
+      },
+      "required": [
+        "type",
+        "dimensions"
+      ],
+      "additionalProperties": false
+    },
+    "DraftOutputSize": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/RatioSize"
+        },
+        {
+          "$ref": "#/$defs/PixelSize"
+        }
+      ]
+    },
+    "ImageParameters": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "image_parameters"
+        },
+        "prompt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "size": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DraftOutputSize"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReferenceAsset"
+          },
+          "minItems": 0,
+          "maxItems": 64
+        },
+        "output_format": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ImageOutputFormat"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "prompt",
+        "size",
+        "references",
+        "output_format"
+      ],
+      "additionalProperties": false
+    },
+    "VideoParameters": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "video_parameters"
+        },
+        "prompt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "size": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DraftOutputSize"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReferenceAsset"
+          },
+          "minItems": 0,
+          "maxItems": 64
+        },
+        "output_format": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/VideoOutputFormat"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "duration_seconds": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "generate_audio": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "prompt",
+        "size",
+        "references",
+        "output_format",
+        "duration_seconds",
+        "generate_audio"
+      ],
+      "additionalProperties": false
+    },
+    "ImageRequirements": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "image_requirements"
+        },
+        "prompt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "size": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DraftOutputSize"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requested_file_count": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "references": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ReferenceAsset"
+              },
+              "minItems": 0,
+              "maxItems": 64
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "output_format": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ImageOutputFormat"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "generation_mode": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ImageMode"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "prompt",
+        "size",
+        "requested_file_count",
+        "references",
+        "output_format",
+        "generation_mode"
+      ],
+      "additionalProperties": false
+    },
+    "VideoRequirements": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "video_requirements"
+        },
+        "prompt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "size": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DraftOutputSize"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requested_file_count": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "references": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ReferenceAsset"
+              },
+              "minItems": 0,
+              "maxItems": 64
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "output_format": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/VideoOutputFormat"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "duration_seconds": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "generate_audio": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "generation_mode": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/VideoMode"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "prompt",
+        "size",
+        "requested_file_count",
+        "references",
+        "output_format",
+        "duration_seconds",
+        "generate_audio",
+        "generation_mode"
+      ],
+      "additionalProperties": false
+    },
+    "ImageIntent": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "image_intent"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64000
+        },
+        "requirements": {
+          "$ref": "#/$defs/ImageRequirements"
+        }
+      },
+      "required": [
+        "type",
+        "description",
+        "requirements"
+      ],
+      "additionalProperties": false
+    },
+    "VideoIntent": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "video_intent"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64000
+        },
+        "requirements": {
+          "$ref": "#/$defs/VideoRequirements"
+        }
+      },
+      "required": [
+        "type",
+        "description",
+        "requirements"
+      ],
+      "additionalProperties": false
+    },
+    "ModelChoice": {
+      "type": "object",
+      "properties": {
+        "model_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "profile_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "expected_capability_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        }
+      },
+      "required": [
+        "model_id",
+        "profile_id",
+        "expected_capability_revision"
+      ],
+      "additionalProperties": false
+    },
+    "ModelSelection": {
+      "type": "object",
+      "properties": {
+        "model_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "profile_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "capability_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        }
+      },
+      "required": [
+        "model_id",
+        "profile_id",
+        "capability_revision"
+      ],
+      "additionalProperties": false
+    },
+    "ParameterOrigin": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/ParameterKey"
+        },
+        "source": {
+          "enum": [
+            "EXPLICIT",
+            "MODEL_DEFAULT"
+          ]
+        },
+        "source_model": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ModelSelection"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "field",
+        "source",
+        "source_model"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "source": {
+                "const": "MODEL_DEFAULT"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "source_model": {
+                "$ref": "#/$defs/ModelSelection"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "source_model": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ImagePlanConfiguration": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "image_plan_configuration"
+        },
+        "model_selection": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ModelSelection"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "intent": {
+          "$ref": "#/$defs/ImageIntent"
+        },
+        "parameters": {
+          "$ref": "#/$defs/ImageParameters"
+        },
+        "parameter_origins": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ParameterOrigin"
+          },
+          "minItems": 0,
+          "maxItems": 11
+        }
+      },
+      "required": [
+        "type",
+        "model_selection",
+        "intent",
+        "parameters",
+        "parameter_origins"
+      ],
+      "additionalProperties": false
+    },
+    "VideoPlanConfiguration": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "video_plan_configuration"
+        },
+        "model_selection": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ModelSelection"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "intent": {
+          "$ref": "#/$defs/VideoIntent"
+        },
+        "parameters": {
+          "$ref": "#/$defs/VideoParameters"
+        },
+        "parameter_origins": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ParameterOrigin"
+          },
+          "minItems": 0,
+          "maxItems": 11
+        }
+      },
+      "required": [
+        "type",
+        "model_selection",
+        "intent",
+        "parameters",
+        "parameter_origins"
+      ],
+      "additionalProperties": false
+    },
+    "PlanConfiguration": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ImagePlanConfiguration"
+        },
+        {
+          "$ref": "#/$defs/VideoPlanConfiguration"
+        }
+      ]
+    },
+    "SizePreset": {
+      "type": "object",
+      "properties": {
+        "preset_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "aspect_ratio": {
+          "$ref": "#/$defs/AspectRatio"
+        },
+        "resolution_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "pixel_dimensions": {
+          "$ref": "#/$defs/PixelDimensions"
+        }
+      },
+      "required": [
+        "preset_id",
+        "aspect_ratio",
+        "resolution_id",
+        "pixel_dimensions"
+      ],
+      "additionalProperties": false
+    },
+    "PixelBounds": {
+      "type": "object",
+      "properties": {
+        "min_width": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "max_width": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "min_height": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "max_height": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "max_pixels": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        }
+      },
+      "required": [
+        "min_width",
+        "max_width",
+        "min_height",
+        "max_height",
+        "max_pixels"
+      ],
+      "additionalProperties": false
+    },
+    "CustomPixelRules": {
+      "type": "object",
+      "properties": {
+        "bounds": {
+          "$ref": "#/$defs/PixelBounds"
+        },
+        "width_step": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "height_step": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "allowed_aspect_ratios": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AspectRatio"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "bounds",
+        "width_step",
+        "height_step",
+        "allowed_aspect_ratios"
+      ],
+      "additionalProperties": false
+    },
+    "SizeRules": {
+      "type": "object",
+      "properties": {
+        "presets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SizePreset"
+          },
+          "minItems": 0
+        },
+        "custom_pixels": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CustomPixelRules"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "presets",
+        "custom_pixels"
+      ],
+      "additionalProperties": false
+    },
+    "DiscreteIntDomain": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "discrete_int_domain"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "type",
+        "values"
+      ],
+      "additionalProperties": false
+    },
+    "SteppedIntDomain": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "stepped_int_domain"
+        },
+        "minimum": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "maximum": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "step": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "type",
+        "minimum",
+        "maximum",
+        "step"
+      ],
+      "additionalProperties": false
+    },
+    "PositiveIntDomain": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/DiscreteIntDomain"
+        },
+        {
+          "$ref": "#/$defs/SteppedIntDomain"
+        }
+      ]
+    },
+    "PromptRules": {
+      "type": "object",
+      "properties": {
+        "max_utf8_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 262144
+        }
+      },
+      "required": [
+        "max_utf8_bytes"
+      ],
+      "additionalProperties": false
+    },
+    "ReferenceRules": {
+      "type": "object",
+      "properties": {
+        "minimum_total_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 64
+        },
+        "maximum_total_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 64
+        },
+        "media_limits": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReferenceMediaLimit"
+          },
+          "minItems": 0,
+          "maxItems": 3
+        },
+        "max_total_video_duration_milliseconds": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9223372036854775807
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "max_total_audio_duration_milliseconds": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9223372036854775807
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "max_input_video_plus_output_duration_milliseconds": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9223372036854775807
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "minimum_total_count",
+        "maximum_total_count",
+        "media_limits",
+        "max_total_video_duration_milliseconds",
+        "max_total_audio_duration_milliseconds",
+        "max_input_video_plus_output_duration_milliseconds"
+      ],
+      "additionalProperties": false
+    },
+    "CapabilityEvidence": {
+      "type": "object",
+      "properties": {
+        "source_kind": {
+          "enum": [
+            "OFFICIAL_DOCUMENTATION",
+            "CONTRACT_VERIFICATION",
+            "PRODUCT_POLICY"
+          ]
+        },
+        "reference": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "checked_at": {
+          "$ref": "#/$defs/Instant"
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        }
+      },
+      "required": [
+        "source_kind",
+        "reference",
+        "checked_at",
+        "note"
+      ],
+      "additionalProperties": false
+    },
+    "ImageDefaults": {
+      "type": "object",
+      "properties": {
+        "size": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DraftOutputSize"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "output_format": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ImageOutputFormat"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "size",
+        "output_format"
+      ],
+      "additionalProperties": false
+    },
+    "VideoDefaults": {
+      "type": "object",
+      "properties": {
+        "size": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DraftOutputSize"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "output_format": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/VideoOutputFormat"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "duration_seconds": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "generate_audio": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "size",
+        "output_format",
+        "duration_seconds",
+        "generate_audio"
+      ],
+      "additionalProperties": false
+    },
+    "VideoOutputOption": {
+      "type": "object",
+      "properties": {
+        "size_preset_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "duration_seconds": {
+          "$ref": "#/$defs/PositiveIntDomain"
+        }
+      },
+      "required": [
+        "size_preset_id",
+        "duration_seconds"
+      ],
+      "additionalProperties": false
+    },
+    "VerifiedImageProfile": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "verified_image_profile"
+        },
+        "profile_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "generation_mode": {
+          "$ref": "#/$defs/ImageMode"
+        },
+        "prompt_rules": {
+          "$ref": "#/$defs/PromptRules"
+        },
+        "size_rules": {
+          "$ref": "#/$defs/SizeRules"
+        },
+        "reference_rules": {
+          "$ref": "#/$defs/ReferenceRules"
+        },
+        "output_formats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ImageOutputFormat"
+          },
+          "minItems": 1
+        },
+        "defaults": {
+          "$ref": "#/$defs/ImageDefaults"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CapabilityEvidence"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "type",
+        "profile_id",
+        "generation_mode",
+        "prompt_rules",
+        "size_rules",
+        "reference_rules",
+        "output_formats",
+        "defaults",
+        "evidence"
+      ],
+      "additionalProperties": false
+    },
+    "VerifiedVideoProfile": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "verified_video_profile"
+        },
+        "profile_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "generation_mode": {
+          "$ref": "#/$defs/VideoMode"
+        },
+        "prompt_rules": {
+          "$ref": "#/$defs/PromptRules"
+        },
+        "size_rules": {
+          "$ref": "#/$defs/SizeRules"
+        },
+        "output_options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/VideoOutputOption"
+          },
+          "minItems": 1
+        },
+        "reference_rules": {
+          "$ref": "#/$defs/ReferenceRules"
+        },
+        "output_formats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/VideoOutputFormat"
+          },
+          "minItems": 1
+        },
+        "generate_audio_values": {
+          "type": "array",
+          "items": {
+            "type": "boolean"
+          },
+          "minItems": 1,
+          "maxItems": 2
+        },
+        "duration_tolerance_milliseconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "defaults": {
+          "$ref": "#/$defs/VideoDefaults"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CapabilityEvidence"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "type",
+        "profile_id",
+        "generation_mode",
+        "prompt_rules",
+        "size_rules",
+        "output_options",
+        "reference_rules",
+        "output_formats",
+        "generate_audio_values",
+        "duration_tolerance_milliseconds",
+        "defaults",
+        "evidence"
+      ],
+      "additionalProperties": false
+    },
+    "UnavailableImageProfile": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "unavailable_image_profile"
+        },
+        "profile_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "generation_mode": {
+          "$ref": "#/$defs/ImageMode"
+        },
+        "status": {
+          "enum": [
+            "UNKNOWN",
+            "UNSUPPORTED"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        }
+      },
+      "required": [
+        "type",
+        "profile_id",
+        "generation_mode",
+        "status",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "UnavailableVideoProfile": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "unavailable_video_profile"
+        },
+        "profile_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "generation_mode": {
+          "$ref": "#/$defs/VideoMode"
+        },
+        "status": {
+          "enum": [
+            "UNKNOWN",
+            "UNSUPPORTED"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        }
+      },
+      "required": [
+        "type",
+        "profile_id",
+        "generation_mode",
+        "status",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "ImageProfile": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/VerifiedImageProfile"
+        },
+        {
+          "$ref": "#/$defs/UnavailableImageProfile"
+        }
+      ]
+    },
+    "VideoProfile": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/VerifiedVideoProfile"
+        },
+        {
+          "$ref": "#/$defs/UnavailableVideoProfile"
+        }
+      ]
+    },
+    "ImageModelDefinition": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "image_model_definition"
+        },
+        "model_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "capability_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "provider_binding": {
+          "$ref": "#/$defs/ProviderBinding"
+        },
+        "profiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ImageProfile"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "type",
+        "model_id",
+        "display_name",
+        "capability_revision",
+        "enabled",
+        "provider_binding",
+        "profiles"
+      ],
+      "additionalProperties": false
+    },
+    "VideoModelDefinition": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "video_model_definition"
+        },
+        "model_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "capability_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "provider_binding": {
+          "$ref": "#/$defs/ProviderBinding"
+        },
+        "profiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/VideoProfile"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "type",
+        "model_id",
+        "display_name",
+        "capability_revision",
+        "enabled",
+        "provider_binding",
+        "profiles"
+      ],
+      "additionalProperties": false
+    },
+    "ModelDefinition": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ImageModelDefinition"
+        },
+        {
+          "$ref": "#/$defs/VideoModelDefinition"
+        }
+      ]
+    },
+    "ModelCatalogSnapshot": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "model_catalog_snapshot"
+        },
+        "catalog_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        },
+        "submission_policy": {
+          "$ref": "#/$defs/GenerationSubmissionPolicy"
+        },
+        "models": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ModelDefinition"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "type",
+        "catalog_revision",
+        "submission_policy",
+        "models"
+      ],
+      "additionalProperties": false
+    },
+    "ResolvedPresetSize": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "resolved_preset_size"
+        },
+        "preset": {
+          "$ref": "#/$defs/SizePreset"
+        }
+      },
+      "required": [
+        "type",
+        "preset"
+      ],
+      "additionalProperties": false
+    },
+    "ExecutableSize": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ResolvedPresetSize"
+        },
+        {
+          "$ref": "#/$defs/PixelSize"
+        }
+      ]
+    },
+    "ImageExecutionParameters": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "image_execution_parameters"
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64000
+        },
+        "size": {
+          "$ref": "#/$defs/ExecutableSize"
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReferenceAsset"
+          },
+          "minItems": 0,
+          "maxItems": 64
+        },
+        "output_format": {
+          "$ref": "#/$defs/ImageOutputFormat"
+        },
+        "generation_mode": {
+          "$ref": "#/$defs/ImageMode"
+        }
+      },
+      "required": [
+        "type",
+        "prompt",
+        "size",
+        "references",
+        "output_format",
+        "generation_mode"
+      ],
+      "additionalProperties": false
+    },
+    "VideoExecutionParameters": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "video_execution_parameters"
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64000
+        },
+        "size": {
+          "$ref": "#/$defs/ResolvedPresetSize"
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReferenceAsset"
+          },
+          "minItems": 0,
+          "maxItems": 64
+        },
+        "output_format": {
+          "$ref": "#/$defs/VideoOutputFormat"
+        },
+        "duration_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "generate_audio": {
+          "type": "boolean"
+        },
+        "generation_mode": {
+          "$ref": "#/$defs/VideoMode"
+        }
+      },
+      "required": [
+        "type",
+        "prompt",
+        "size",
+        "references",
+        "output_format",
+        "duration_seconds",
+        "generate_audio",
+        "generation_mode"
+      ],
+      "additionalProperties": false
+    },
+    "ImageResultExpectations": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "image_result_expectations"
+        },
+        "file_count": {
+          "const": 1
+        },
+        "size": {
+          "$ref": "#/$defs/ExecutableSize"
+        },
+        "output_format": {
+          "$ref": "#/$defs/ImageOutputFormat"
+        }
+      },
+      "required": [
+        "type",
+        "file_count",
+        "size",
+        "output_format"
+      ],
+      "additionalProperties": false
+    },
+    "VideoResultExpectations": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "video_result_expectations"
+        },
+        "file_count": {
+          "const": 1
+        },
+        "size": {
+          "$ref": "#/$defs/ResolvedPresetSize"
+        },
+        "output_format": {
+          "$ref": "#/$defs/VideoOutputFormat"
+        },
+        "duration_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "duration_tolerance_milliseconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "expected_audio": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type",
+        "file_count",
+        "size",
+        "output_format",
+        "duration_seconds",
+        "duration_tolerance_milliseconds",
+        "expected_audio"
+      ],
+      "additionalProperties": false
+    },
+    "ImageGenerationRequest": {
+      "type": "object",
+      "properties": {
+        "request_type": {
+          "const": "image_generation_plan_v1"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "model_selection": {
+          "$ref": "#/$defs/ModelSelection"
+        },
+        "provider_binding": {
+          "$ref": "#/$defs/ProviderBinding"
+        },
+        "parameters": {
+          "$ref": "#/$defs/ImageExecutionParameters"
+        },
+        "result_expectations": {
+          "$ref": "#/$defs/ImageResultExpectations"
+        }
+      },
+      "required": [
+        "request_type",
+        "schema_version",
+        "model_selection",
+        "provider_binding",
+        "parameters",
+        "result_expectations"
+      ],
+      "additionalProperties": false
+    },
+    "VideoGenerationRequest": {
+      "type": "object",
+      "properties": {
+        "request_type": {
+          "const": "video_generation_plan_v1"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "model_selection": {
+          "$ref": "#/$defs/ModelSelection"
+        },
+        "provider_binding": {
+          "$ref": "#/$defs/ProviderBinding"
+        },
+        "parameters": {
+          "$ref": "#/$defs/VideoExecutionParameters"
+        },
+        "result_expectations": {
+          "$ref": "#/$defs/VideoResultExpectations"
+        }
+      },
+      "required": [
+        "request_type",
+        "schema_version",
+        "model_selection",
+        "provider_binding",
+        "parameters",
+        "result_expectations"
+      ],
+      "additionalProperties": false
+    },
+    "NormalizedGenerationRequest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ImageGenerationRequest"
+        },
+        {
+          "$ref": "#/$defs/VideoGenerationRequest"
+        }
+      ]
+    },
+    "GenerationPlan": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "generation_plan"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "user_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        },
+        "state": {
+          "$ref": "#/$defs/PlanState"
+        },
+        "configuration": {
+          "$ref": "#/$defs/PlanConfiguration"
+        },
+        "frozen_request": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/NormalizedGenerationRequest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "created_at": {
+          "$ref": "#/$defs/Instant"
+        },
+        "updated_at": {
+          "$ref": "#/$defs/Instant"
+        },
+        "frozen_at": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Instant"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "schema_version",
+        "id",
+        "user_id",
+        "session_id",
+        "revision",
+        "state",
+        "configuration",
+        "frozen_request",
+        "created_at",
+        "updated_at",
+        "frozen_at"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "DRAFT"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "frozen_request": {
+                "type": "null"
+              },
+              "frozen_at": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "frozen_request": {
+                "$ref": "#/$defs/NormalizedGenerationRequest"
+              },
+              "frozen_at": {
+                "$ref": "#/$defs/Instant"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "SessionPlanFocus": {
+      "type": "object",
+      "properties": {
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "active_plan_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        }
+      },
+      "required": [
+        "session_id",
+        "active_plan_id",
+        "revision"
+      ],
+      "additionalProperties": false
+    },
+    "IssueCode": {
+      "type": "string",
+      "enum": [
+        "MODEL_REQUIRED",
+        "MODEL_DISABLED",
+        "MODEL_NOT_FOUND",
+        "CAPABILITY_REVISION_UNAVAILABLE",
+        "CAPABILITIES_CHANGED",
+        "PROFILE_UNKNOWN",
+        "PROFILE_UNSUPPORTED",
+        "REQUIRED_PARAMETER_MISSING",
+        "PARAMETER_UNSUPPORTED",
+        "REQUIREMENT_UNSATISFIED",
+        "REFERENCE_UNAVAILABLE",
+        "REFERENCE_TYPE_MISMATCH",
+        "REFERENCE_METADATA_UNAVAILABLE",
+        "REFERENCE_LIMIT_EXCEEDED",
+        "REFERENCE_COMBINATION_UNSUPPORTED",
+        "SIZE_DURATION_COMBINATION_UNSUPPORTED",
+        "EXECUTION_ADAPTER_UNAVAILABLE",
+        "RESULT_VERIFIER_UNAVAILABLE",
+        "REQUESTED_FILE_COUNT_UNSUPPORTED"
+      ]
+    },
+    "IssueField": {
+      "type": "string",
+      "enum": [
+        "MODEL",
+        "PROFILE",
+        "GENERATION_MODE",
+        "INTENT_DESCRIPTION",
+        "PROMPT",
+        "ASPECT_RATIO",
+        "RESOLUTION_ID",
+        "PIXEL_DIMENSIONS",
+        "REQUESTED_FILE_COUNT",
+        "REFERENCES",
+        "OUTPUT_FORMAT",
+        "DURATION_SECONDS",
+        "GENERATE_AUDIO",
+        "PROVIDER_BINDING"
+      ]
+    },
+    "ValidationIssue": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/IssueCode"
+        },
+        "field": {
+          "$ref": "#/$defs/IssueField"
+        },
+        "reference_index": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 63
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "model_selection": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ModelSelection"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "code",
+        "field",
+        "reference_index",
+        "message",
+        "model_selection"
+      ],
+      "additionalProperties": false
+    },
+    "PlanValidation": {
+      "type": "object",
+      "properties": {
+        "can_submit": {
+          "type": "boolean"
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ValidationIssue"
+          },
+          "minItems": 0
+        },
+        "validated_catalog_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        }
+      },
+      "required": [
+        "can_submit",
+        "issues",
+        "validated_catalog_revision"
+      ],
+      "additionalProperties": false
+    },
+    "GenerationPlanSnapshot": {
+      "type": "object",
+      "properties": {
+        "plan": {
+          "$ref": "#/$defs/GenerationPlan"
+        },
+        "validation": {
+          "$ref": "#/$defs/PlanValidation"
+        }
+      },
+      "required": [
+        "plan",
+        "validation"
+      ],
+      "additionalProperties": false
+    },
+    "PlansCursor": {
+      "type": "object",
+      "properties": {
+        "before_created_at": {
+          "$ref": "#/$defs/Instant"
+        },
+        "before_id": {
+          "$ref": "#/$defs/Uuid"
+        }
+      },
+      "required": [
+        "before_created_at",
+        "before_id"
+      ],
+      "additionalProperties": false
+    },
+    "FocusedPlanQuery": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "focused"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "PlanByIdQuery": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "by_id"
+        },
+        "plan_id": {
+          "$ref": "#/$defs/Uuid"
+        }
+      },
+      "required": [
+        "type",
+        "plan_id"
+      ],
+      "additionalProperties": false
+    },
+    "SessionPlansQuery": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "list"
+        },
+        "cursor": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PlansCursor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50
+        }
+      },
+      "required": [
+        "type",
+        "cursor",
+        "limit"
+      ],
+      "additionalProperties": false
+    },
+    "PlanQuery": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/FocusedPlanQuery"
+        },
+        {
+          "$ref": "#/$defs/PlanByIdQuery"
+        },
+        {
+          "$ref": "#/$defs/SessionPlansQuery"
+        }
+      ]
+    },
+    "ImageTarget": {
+      "type": "object",
+      "properties": {
+        "media_type": {
+          "const": "IMAGE"
+        },
+        "model_choice": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ModelChoice"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "media_type",
+        "model_choice"
+      ],
+      "additionalProperties": false
+    },
+    "VideoTarget": {
+      "type": "object",
+      "properties": {
+        "media_type": {
+          "const": "VIDEO"
+        },
+        "model_choice": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ModelChoice"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "media_type",
+        "model_choice"
+      ],
+      "additionalProperties": false
+    },
+    "GenerationTarget": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ImageTarget"
+        },
+        {
+          "$ref": "#/$defs/VideoTarget"
+        }
+      ]
+    },
+    "KeepChange": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "KEEP"
+        }
+      },
+      "required": [
+        "op"
+      ],
+      "additionalProperties": false
+    },
+    "ClearChange": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "CLEAR"
+        }
+      },
+      "required": [
+        "op"
+      ],
+      "additionalProperties": false
+    },
+    "SetDescription": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "SET"
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64000
+        }
+      },
+      "required": [
+        "op",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "DescriptionChange": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/KeepChange"
+        },
+        {
+          "$ref": "#/$defs/SetDescription"
+        }
+      ]
+    },
+    "SetPrompt": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "SET"
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64000
+        }
+      },
+      "required": [
+        "op",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "PromptChange": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/KeepChange"
+        },
+        {
+          "$ref": "#/$defs/SetPrompt"
+        },
+        {
+          "$ref": "#/$defs/ClearChange"
+        }
+      ]
+    },
+    "SetSize": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "SET"
+        },
+        "value": {
+          "$ref": "#/$defs/DraftOutputSize"
+        }
+      },
+      "required": [
+        "op",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "SizeChange": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/KeepChange"
+        },
+        {
+          "$ref": "#/$defs/SetSize"
+        },
+        {
+          "$ref": "#/$defs/ClearChange"
+        }
+      ]
+    },
+    "SetImageOutputFormat": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "SET"
+        },
+        "value": {
+          "$ref": "#/$defs/ImageOutputFormat"
+        }
+      },
+      "required": [
+        "op",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "ImageOutputFormatChange": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/KeepChange"
+        },
+        {
+          "$ref": "#/$defs/SetImageOutputFormat"
+        },
+        {
+          "$ref": "#/$defs/ClearChange"
+        }
+      ]
+    },
+    "SetVideoOutputFormat": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "SET"
+        },
+        "value": {
+          "$ref": "#/$defs/VideoOutputFormat"
+        }
+      },
+      "required": [
+        "op",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "VideoOutputFormatChange": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/KeepChange"
+        },
+        {
+          "$ref": "#/$defs/SetVideoOutputFormat"
+        },
+        {
+          "$ref": "#/$defs/ClearChange"
+        }
+      ]
+    },
+    "SetDuration": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "SET"
+        },
+        "value": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "op",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "DurationChange": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/KeepChange"
+        },
+        {
+          "$ref": "#/$defs/SetDuration"
+        },
+        {
+          "$ref": "#/$defs/ClearChange"
+        }
+      ]
+    },
+    "SetBoolean": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "SET"
+        },
+        "value": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "op",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "BooleanChange": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/KeepChange"
+        },
+        {
+          "$ref": "#/$defs/SetBoolean"
+        },
+        {
+          "$ref": "#/$defs/ClearChange"
+        }
+      ]
+    },
+    "SetImageMode": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "SET"
+        },
+        "value": {
+          "$ref": "#/$defs/ImageMode"
+        }
+      },
+      "required": [
+        "op",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "ImageModeChange": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/KeepChange"
+        },
+        {
+          "$ref": "#/$defs/SetImageMode"
+        },
+        {
+          "$ref": "#/$defs/ClearChange"
+        }
+      ]
+    },
+    "SetVideoMode": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "SET"
+        },
+        "value": {
+          "$ref": "#/$defs/VideoMode"
+        }
+      },
+      "required": [
+        "op",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "VideoModeChange": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/KeepChange"
+        },
+        {
+          "$ref": "#/$defs/SetVideoMode"
+        },
+        {
+          "$ref": "#/$defs/ClearChange"
+        }
+      ]
+    },
+    "ImageParametersPatch": {
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "$ref": "#/$defs/PromptChange"
+        },
+        "size": {
+          "$ref": "#/$defs/SizeChange"
+        },
+        "references": {
+          "$ref": "#/$defs/ReferencesChange"
+        },
+        "output_format": {
+          "$ref": "#/$defs/ImageOutputFormatChange"
+        }
+      },
+      "required": [
+        "prompt",
+        "size",
+        "references",
+        "output_format"
+      ],
+      "additionalProperties": false
+    },
+    "VideoParametersPatch": {
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "$ref": "#/$defs/PromptChange"
+        },
+        "size": {
+          "$ref": "#/$defs/SizeChange"
+        },
+        "references": {
+          "$ref": "#/$defs/ReferencesChange"
+        },
+        "output_format": {
+          "$ref": "#/$defs/VideoOutputFormatChange"
+        },
+        "duration_seconds": {
+          "$ref": "#/$defs/DurationChange"
+        },
+        "generate_audio": {
+          "$ref": "#/$defs/BooleanChange"
+        }
+      },
+      "required": [
+        "prompt",
+        "size",
+        "references",
+        "output_format",
+        "duration_seconds",
+        "generate_audio"
+      ],
+      "additionalProperties": false
+    },
+    "ImageRequirementsPatch": {
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "$ref": "#/$defs/PromptChange"
+        },
+        "size": {
+          "$ref": "#/$defs/SizeChange"
+        },
+        "requested_file_count": {
+          "$ref": "#/$defs/RequestedFileCountChange"
+        },
+        "references": {
+          "$ref": "#/$defs/ReferencesChange"
+        },
+        "output_format": {
+          "$ref": "#/$defs/ImageOutputFormatChange"
+        },
+        "generation_mode": {
+          "$ref": "#/$defs/ImageModeChange"
+        }
+      },
+      "required": [
+        "prompt",
+        "size",
+        "requested_file_count",
+        "references",
+        "output_format",
+        "generation_mode"
+      ],
+      "additionalProperties": false
+    },
+    "VideoRequirementsPatch": {
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "$ref": "#/$defs/PromptChange"
+        },
+        "size": {
+          "$ref": "#/$defs/SizeChange"
+        },
+        "requested_file_count": {
+          "$ref": "#/$defs/RequestedFileCountChange"
+        },
+        "references": {
+          "$ref": "#/$defs/ReferencesChange"
+        },
+        "output_format": {
+          "$ref": "#/$defs/VideoOutputFormatChange"
+        },
+        "duration_seconds": {
+          "$ref": "#/$defs/DurationChange"
+        },
+        "generate_audio": {
+          "$ref": "#/$defs/BooleanChange"
+        },
+        "generation_mode": {
+          "$ref": "#/$defs/VideoModeChange"
+        }
+      },
+      "required": [
+        "prompt",
+        "size",
+        "requested_file_count",
+        "references",
+        "output_format",
+        "duration_seconds",
+        "generate_audio",
+        "generation_mode"
+      ],
+      "additionalProperties": false
+    },
+    "ImagePlanPatch": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "image_plan_patch"
+        },
+        "description": {
+          "$ref": "#/$defs/DescriptionChange"
+        },
+        "requirements": {
+          "$ref": "#/$defs/ImageRequirementsPatch"
+        },
+        "parameters": {
+          "$ref": "#/$defs/ImageParametersPatch"
+        }
+      },
+      "required": [
+        "type",
+        "description",
+        "requirements",
+        "parameters"
+      ],
+      "additionalProperties": false
+    },
+    "VideoPlanPatch": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "video_plan_patch"
+        },
+        "description": {
+          "$ref": "#/$defs/DescriptionChange"
+        },
+        "requirements": {
+          "$ref": "#/$defs/VideoRequirementsPatch"
+        },
+        "parameters": {
+          "$ref": "#/$defs/VideoParametersPatch"
+        }
+      },
+      "required": [
+        "type",
+        "description",
+        "requirements",
+        "parameters"
+      ],
+      "additionalProperties": false
+    },
+    "PlanPatch": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ImagePlanPatch"
+        },
+        {
+          "$ref": "#/$defs/VideoPlanPatch"
+        }
+      ]
+    },
+    "GetModelCatalogArguments": {
+      "type": "object",
+      "properties": {
+        "media_type": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MediaType"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "media_type"
+      ],
+      "additionalProperties": false
+    },
+    "ReadGenerationPlanArguments": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "$ref": "#/$defs/PlanQuery"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "additionalProperties": false
+    },
+    "CreateImagePlanArguments": {
+      "type": "object",
+      "properties": {
+        "target": {
+          "$ref": "#/$defs/ImageTarget"
+        },
+        "intent": {
+          "$ref": "#/$defs/ImageIntent"
+        },
+        "parameters": {
+          "$ref": "#/$defs/ImageParameters"
+        },
+        "expected_focus_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        }
+      },
+      "required": [
+        "target",
+        "intent",
+        "parameters",
+        "expected_focus_revision"
+      ],
+      "additionalProperties": false
+    },
+    "CreateVideoPlanArguments": {
+      "type": "object",
+      "properties": {
+        "target": {
+          "$ref": "#/$defs/VideoTarget"
+        },
+        "intent": {
+          "$ref": "#/$defs/VideoIntent"
+        },
+        "parameters": {
+          "$ref": "#/$defs/VideoParameters"
+        },
+        "expected_focus_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        }
+      },
+      "required": [
+        "target",
+        "intent",
+        "parameters",
+        "expected_focus_revision"
+      ],
+      "additionalProperties": false
+    },
+    "CreateGenerationPlanArguments": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/CreateImagePlanArguments"
+        },
+        {
+          "$ref": "#/$defs/CreateVideoPlanArguments"
+        }
+      ]
+    },
+    "UpdateGenerationPlanArguments": {
+      "type": "object",
+      "properties": {
+        "plan_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "expected_plan_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        },
+        "expected_focus_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "patch": {
+          "$ref": "#/$defs/PlanPatch"
+        }
+      },
+      "required": [
+        "plan_id",
+        "expected_plan_revision",
+        "expected_focus_revision",
+        "patch"
+      ],
+      "additionalProperties": false
+    },
+    "ChangeGenerationTargetArguments": {
+      "type": "object",
+      "properties": {
+        "plan_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "expected_plan_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        },
+        "expected_focus_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "target": {
+          "$ref": "#/$defs/GenerationTarget"
+        }
+      },
+      "required": [
+        "plan_id",
+        "expected_plan_revision",
+        "expected_focus_revision",
+        "target"
+      ],
+      "additionalProperties": false
+    },
+    "CloneGenerationPlanArguments": {
+      "type": "object",
+      "properties": {
+        "source_plan_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "expected_source_plan_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        },
+        "expected_focus_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        }
+      },
+      "required": [
+        "source_plan_id",
+        "expected_source_plan_revision",
+        "expected_focus_revision"
+      ],
+      "additionalProperties": false
+    },
+    "FocusGenerationPlanArguments": {
+      "type": "object",
+      "properties": {
+        "plan_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "expected_focus_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        }
+      },
+      "required": [
+        "plan_id",
+        "expected_focus_revision"
+      ],
+      "additionalProperties": false
+    },
+    "SubmitGenerationPlanArguments": {
+      "type": "object",
+      "properties": {
+        "plan_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "expected_plan_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        },
+        "expected_focus_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        }
+      },
+      "required": [
+        "plan_id",
+        "expected_plan_revision",
+        "expected_focus_revision"
+      ],
+      "additionalProperties": false
+    },
+    "GenerationPlanToolName": {
+      "type": "string",
+      "enum": [
+        "get_model_catalog",
+        "read_generation_plan",
+        "create_generation_plan",
+        "update_generation_plan",
+        "change_generation_target",
+        "clone_generation_plan",
+        "focus_generation_plan",
+        "submit_generation_plan"
+      ]
+    },
+    "GetModelCatalogInvocation": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "generation_plan_tool_invocation"
+        },
+        "operation_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "tool_name": {
+          "const": "get_model_catalog"
+        },
+        "arguments": {
+          "$ref": "#/$defs/GetModelCatalogArguments"
+        }
+      },
+      "required": [
+        "type",
+        "operation_id",
+        "session_id",
+        "tool_name",
+        "arguments"
+      ],
+      "additionalProperties": false
+    },
+    "ReadGenerationPlanInvocation": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "generation_plan_tool_invocation"
+        },
+        "operation_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "tool_name": {
+          "const": "read_generation_plan"
+        },
+        "arguments": {
+          "$ref": "#/$defs/ReadGenerationPlanArguments"
+        }
+      },
+      "required": [
+        "type",
+        "operation_id",
+        "session_id",
+        "tool_name",
+        "arguments"
+      ],
+      "additionalProperties": false
+    },
+    "CreateGenerationPlanInvocation": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "generation_plan_tool_invocation"
+        },
+        "operation_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "tool_name": {
+          "const": "create_generation_plan"
+        },
+        "arguments": {
+          "$ref": "#/$defs/CreateGenerationPlanArguments"
+        }
+      },
+      "required": [
+        "type",
+        "operation_id",
+        "session_id",
+        "tool_name",
+        "arguments"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateGenerationPlanInvocation": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "generation_plan_tool_invocation"
+        },
+        "operation_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "tool_name": {
+          "const": "update_generation_plan"
+        },
+        "arguments": {
+          "$ref": "#/$defs/UpdateGenerationPlanArguments"
+        }
+      },
+      "required": [
+        "type",
+        "operation_id",
+        "session_id",
+        "tool_name",
+        "arguments"
+      ],
+      "additionalProperties": false
+    },
+    "ChangeGenerationTargetInvocation": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "generation_plan_tool_invocation"
+        },
+        "operation_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "tool_name": {
+          "const": "change_generation_target"
+        },
+        "arguments": {
+          "$ref": "#/$defs/ChangeGenerationTargetArguments"
+        }
+      },
+      "required": [
+        "type",
+        "operation_id",
+        "session_id",
+        "tool_name",
+        "arguments"
+      ],
+      "additionalProperties": false
+    },
+    "CloneGenerationPlanInvocation": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "generation_plan_tool_invocation"
+        },
+        "operation_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "tool_name": {
+          "const": "clone_generation_plan"
+        },
+        "arguments": {
+          "$ref": "#/$defs/CloneGenerationPlanArguments"
+        }
+      },
+      "required": [
+        "type",
+        "operation_id",
+        "session_id",
+        "tool_name",
+        "arguments"
+      ],
+      "additionalProperties": false
+    },
+    "FocusGenerationPlanInvocation": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "generation_plan_tool_invocation"
+        },
+        "operation_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "tool_name": {
+          "const": "focus_generation_plan"
+        },
+        "arguments": {
+          "$ref": "#/$defs/FocusGenerationPlanArguments"
+        }
+      },
+      "required": [
+        "type",
+        "operation_id",
+        "session_id",
+        "tool_name",
+        "arguments"
+      ],
+      "additionalProperties": false
+    },
+    "SubmitGenerationPlanInvocation": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "generation_plan_tool_invocation"
+        },
+        "operation_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "tool_name": {
+          "const": "submit_generation_plan"
+        },
+        "arguments": {
+          "$ref": "#/$defs/SubmitGenerationPlanArguments"
+        }
+      },
+      "required": [
+        "type",
+        "operation_id",
+        "session_id",
+        "tool_name",
+        "arguments"
+      ],
+      "additionalProperties": false
+    },
+    "JavaPlanToolInvocation": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/GetModelCatalogInvocation"
+        },
+        {
+          "$ref": "#/$defs/ReadGenerationPlanInvocation"
+        },
+        {
+          "$ref": "#/$defs/CreateGenerationPlanInvocation"
+        },
+        {
+          "$ref": "#/$defs/UpdateGenerationPlanInvocation"
+        },
+        {
+          "$ref": "#/$defs/ChangeGenerationTargetInvocation"
+        },
+        {
+          "$ref": "#/$defs/CloneGenerationPlanInvocation"
+        },
+        {
+          "$ref": "#/$defs/FocusGenerationPlanInvocation"
+        },
+        {
+          "$ref": "#/$defs/SubmitGenerationPlanInvocation"
+        }
+      ]
+    },
+    "GenerationPlanReadResult": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "generation_plan_read_result"
+        },
+        "focus": {
+          "$ref": "#/$defs/SessionPlanFocus"
+        },
+        "plans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenerationPlanSnapshot"
+          },
+          "minItems": 0,
+          "maxItems": 50
+        },
+        "next_cursor": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PlansCursor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "focus",
+        "plans",
+        "next_cursor"
+      ],
+      "additionalProperties": false
+    },
+    "AppliedDefault": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/ParameterKey"
+        },
+        "source_model": {
+          "$ref": "#/$defs/ModelSelection"
+        }
+      },
+      "required": [
+        "field",
+        "source_model"
+      ],
+      "additionalProperties": false
+    },
+    "PlanMutationReceipt": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "generation_plan_mutation_receipt"
+        },
+        "action": {
+          "enum": [
+            "CREATED",
+            "UPDATED",
+            "MODEL_CHANGED",
+            "MEDIA_PLAN_CREATED",
+            "CLONED"
+          ]
+        },
+        "source_plan_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "snapshot": {
+          "$ref": "#/$defs/GenerationPlanSnapshot"
+        },
+        "focus": {
+          "$ref": "#/$defs/SessionPlanFocus"
+        },
+        "cleared_execution_fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ParameterKey"
+          },
+          "minItems": 0,
+          "maxItems": 11
+        },
+        "non_migrated_requirement_fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/IssueField"
+          },
+          "minItems": 0,
+          "maxItems": 14
+        },
+        "applied_defaults": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AppliedDefault"
+          },
+          "minItems": 0,
+          "maxItems": 11
+        }
+      },
+      "required": [
+        "type",
+        "action",
+        "source_plan_id",
+        "snapshot",
+        "focus",
+        "cleared_execution_fields",
+        "non_migrated_requirement_fields",
+        "applied_defaults"
+      ],
+      "additionalProperties": false
+    },
+    "PlanFocusReceipt": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "generation_plan_focus_receipt"
+        },
+        "focus": {
+          "$ref": "#/$defs/SessionPlanFocus"
+        }
+      },
+      "required": [
+        "type",
+        "focus"
+      ],
+      "additionalProperties": false
+    },
+    "PlanTaskSubmissionReceipt": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "plan_task_submission_receipt"
+        },
+        "plan_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "frozen_plan_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        },
+        "accepted": {
+          "const": true
+        },
+        "requested_file_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "tasks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SubmittedTask"
+          },
+          "minItems": 1
+        },
+        "focus": {
+          "$ref": "#/$defs/SessionPlanFocus"
+        }
+      },
+      "required": [
+        "type",
+        "plan_id",
+        "frozen_plan_revision",
+        "accepted",
+        "requested_file_count",
+        "tasks",
+        "focus"
+      ],
+      "additionalProperties": false
+    },
+    "PlanToolErrorCode": {
+      "type": "string",
+      "enum": [
+        "INVALID_ARGUMENT",
+        "RESOURCE_NOT_FOUND",
+        "PLAN_FROZEN",
+        "PLAN_REVISION_CONFLICT",
+        "FOCUS_REVISION_CONFLICT",
+        "PLAN_NOT_FOCUSED",
+        "TARGET_NOT_AVAILABLE",
+        "CAPABILITIES_CHANGED",
+        "PLAN_NOT_SUBMITTABLE",
+        "OPERATION_IDENTITY_CONFLICT",
+        "CONCURRENT_MODIFICATION",
+        "DEPENDENT_TOOL_BATCH"
+      ]
+    },
+    "PlanToolRejection": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "generation_plan_tool_rejection"
+        },
+        "code": {
+          "$ref": "#/$defs/PlanToolErrorCode"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "current_plan_revision": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9223372036854775807
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "current_focus_revision": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854775807
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ValidationIssue"
+          },
+          "minItems": 0
+        },
+        "business_execution": {
+          "const": "NOT_PERFORMED"
+        }
+      },
+      "required": [
+        "type",
+        "code",
+        "message",
+        "current_plan_revision",
+        "current_focus_revision",
+        "issues",
+        "business_execution"
+      ],
+      "additionalProperties": false
+    },
+    "GenerationPlanToolResult": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ModelCatalogSnapshot"
+        },
+        {
+          "$ref": "#/$defs/GenerationPlanReadResult"
+        },
+        {
+          "$ref": "#/$defs/PlanMutationReceipt"
+        },
+        {
+          "$ref": "#/$defs/PlanFocusReceipt"
+        },
+        {
+          "$ref": "#/$defs/PlanTaskSubmissionReceipt"
+        },
+        {
+          "$ref": "#/$defs/PlanToolRejection"
+        }
+      ]
+    },
+    "JavaPlanToolOperationReceipt": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "generation_plan_tool_operation_receipt"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "operation_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "tool_name": {
+          "$ref": "#/$defs/GenerationPlanToolName"
+        },
+        "request_hash": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "result": {
+          "$ref": "#/$defs/GenerationPlanToolResult"
+        }
+      },
+      "required": [
+        "type",
+        "schema_version",
+        "operation_id",
+        "session_id",
+        "tool_name",
+        "request_hash",
+        "result"
+      ],
+      "additionalProperties": false
+    },
+    "VerifiedImageMetadata": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "verified_image_metadata"
+        },
+        "asset_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        },
+        "detected_mime_type": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "dimensions": {
+          "$ref": "#/$defs/PixelDimensions"
+        }
+      },
+      "required": [
+        "type",
+        "asset_id",
+        "sha256",
+        "size_bytes",
+        "detected_mime_type",
+        "dimensions"
+      ],
+      "additionalProperties": false
+    },
+    "VerifiedVideoMetadata": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "verified_video_metadata"
+        },
+        "asset_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        },
+        "detected_mime_type": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "dimensions": {
+          "$ref": "#/$defs/PixelDimensions"
+        },
+        "duration_milliseconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        },
+        "has_audio": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type",
+        "asset_id",
+        "sha256",
+        "size_bytes",
+        "detected_mime_type",
+        "dimensions",
+        "duration_milliseconds",
+        "has_audio"
+      ],
+      "additionalProperties": false
+    },
+    "VerifiedAudioMetadata": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "verified_audio_metadata"
+        },
+        "asset_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        },
+        "detected_mime_type": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "duration_milliseconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        }
+      },
+      "required": [
+        "type",
+        "asset_id",
+        "sha256",
+        "size_bytes",
+        "detected_mime_type",
+        "duration_milliseconds"
+      ],
+      "additionalProperties": false
+    },
+    "VerifiedMediaMetadata": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/VerifiedImageMetadata"
+        },
+        {
+          "$ref": "#/$defs/VerifiedVideoMetadata"
+        },
+        {
+          "$ref": "#/$defs/VerifiedAudioMetadata"
+        }
+      ]
+    },
+    "ReferenceAsset": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "reference_asset"
+        },
+        "asset_id": {
+          "$ref": "#/$defs/Uuid"
+        }
+      },
+      "required": [
+        "type",
+        "asset_id"
+      ],
+      "additionalProperties": false
+    },
+    "ReferenceMediaType": {
+      "type": "string",
+      "enum": [
+        "IMAGE",
+        "VIDEO",
+        "AUDIO"
+      ]
+    },
+    "ReferenceMediaLimit": {
+      "type": "object",
+      "properties": {
+        "media_type": {
+          "$ref": "#/$defs/ReferenceMediaType"
+        },
+        "minimum_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 64
+        },
+        "maximum_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 64
+        },
+        "mime_types": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "minItems": 1
+        },
+        "max_asset_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        },
+        "dimensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PixelBounds"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "max_duration_milliseconds": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9223372036854775807
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "aspect_ratio_range": {
+          "$ref": "#/$defs/AspectRatioRange"
+        }
+      },
+      "required": [
+        "media_type",
+        "minimum_count",
+        "maximum_count",
+        "mime_types",
+        "max_asset_bytes",
+        "dimensions",
+        "max_duration_milliseconds"
+      ],
+      "additionalProperties": false
+    },
+    "SetRequestedFileCount": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "SET"
+        },
+        "value": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "op",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "RequestedFileCountChange": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/KeepChange"
+        },
+        {
+          "$ref": "#/$defs/SetRequestedFileCount"
+        },
+        {
+          "$ref": "#/$defs/ClearChange"
+        }
+      ]
+    },
+    "SetReferences": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "SET"
+        },
+        "value": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReferenceAsset"
+          },
+          "minItems": 0,
+          "maxItems": 64
+        }
+      },
+      "required": [
+        "op",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "ReferencesChange": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/KeepChange"
+        },
+        {
+          "$ref": "#/$defs/SetReferences"
+        },
+        {
+          "$ref": "#/$defs/ClearChange"
+        }
+      ]
+    },
+    "GenerationSubmissionPolicy": {
+      "type": "object",
+      "properties": {
+        "maximum_tasks_per_submission": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "maximum_tasks_per_submission"
+      ],
+      "additionalProperties": false
+    },
+    "SubmittedTask": {
+      "type": "object",
+      "properties": {
+        "index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483646
+        },
+        "task_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "task_operation_id": {
+          "$ref": "#/$defs/Uuid"
+        }
+      },
+      "required": [
+        "index",
+        "task_id",
+        "task_operation_id"
+      ],
+      "additionalProperties": false
+    },
+    "ProviderBinding": {
+      "type": "object",
+      "properties": {
+        "provider_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "[^\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]"
+        },
+        "provider_model_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "pattern": "[^\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]"
+        },
+        "adapter_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "[^\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]"
+        }
+      },
+      "required": [
+        "provider_id",
+        "provider_model_id",
+        "adapter_id"
+      ],
+      "additionalProperties": false
+    },
+    "AspectRatioRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "minimum": {
+          "$ref": "#/$defs/AspectRatio"
+        },
+        "maximum": {
+          "$ref": "#/$defs/AspectRatio"
+        }
+      },
+      "required": [
+        "minimum",
+        "maximum"
+      ]
+    }
+  }
+}

@@ -1,0 +1,97 @@
+server:
+  address: ${LUX_BIND_ADDRESS:127.0.0.1}
+
+spring:
+  task:
+    scheduling:
+      pool:
+        size: 5
+  application:
+    name: lux-java-backend
+  datasource:
+    hikari:
+      transaction-isolation: TRANSACTION_READ_COMMITTED
+      data-source-properties:
+        connectionTimeZone: UTC
+        forceConnectionTimeZoneToSession: true
+    url: ${LUX_DB_URL:jdbc:mysql://localhost:3306/lux?connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true}
+    username: ${LUX_DB_USER:lux}
+    password: ${LUX_DB_PASSWORD:}
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+  flyway:
+    locations: classpath:db/session-storage
+    validate-on-migrate: true
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+        type.preferred_instant_jdbc_type: TIMESTAMP
+  servlet:
+    multipart:
+      max-file-size: ${LUX_MAX_UPLOAD_SIZE:100MB}
+      max-request-size: ${LUX_MAX_REQUEST_SIZE:101MB}
+  kafka:
+    bootstrap-servers: ${LUX_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        max.request.size: 33554432
+        max.block.ms: 5000
+        delivery.timeout.ms: 10000
+        request.timeout.ms: 5000
+    consumer:
+      group-id: lux-java-backend-v2
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: 1
+      properties:
+        max.poll.interval.ms: ${LUX_KAFKA_MAX_POLL_INTERVAL_MS:900000}
+        max.partition.fetch.bytes: 33554432
+        fetch.max.bytes: 67108864
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: record
+
+lux:
+  generation:
+    byteplus:
+      enabled: ${LUX_BYTEPLUS_GENERATION_ENABLED:false}
+  agent:
+    base-url: ${LUX_AGENT_BASE_URL:}
+  task:
+    import-timeout-ms: ${LUX_TASK_IMPORT_TIMEOUT_MS:240000}
+  local:
+    bootstrap-user: ${LUX_BOOTSTRAP_USER:true}
+    default-user-id: ${LUX_DEFAULT_USER_ID:00000000-0000-0000-0000-000000000001}
+  storage:
+    provider: ${LUX_STORAGE_PROVIDER:s3}
+    root: ${LUX_STORAGE_ROOT:./data/assets}
+    staging-root: ${LUX_STORAGE_STAGING_ROOT:./data/staging}
+    max-bytes: ${LUX_MAX_ASSET_BYTES:104857600}
+    s3:
+      endpoint: ${LUX_S3_ENDPOINT:http://127.0.0.1:8333}
+      region: ${LUX_S3_REGION:us-east-1}
+      bucket: ${LUX_S3_BUCKET:lux-assets}
+      access-key: ${LUX_S3_ACCESS_KEY:}
+      secret-key: ${LUX_S3_SECRET_KEY:}
+  workers:
+    enabled: ${LUX_WORKERS_ENABLED:true}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true

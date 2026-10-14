@@ -1,0 +1,225 @@
+name: lux-dev
+
+x-owner-labels: &owner-labels
+  lux.integration.owner: ${LUX_INTEGRATION_OWNER:-local-development}
+
+services:
+  mysql:
+    image: mysql:8.4
+    init: true
+    mem_limit: 640m
+    labels: *owner-labels
+    command: ["--default-time-zone=+00:00", "--max-allowed-packet=536870912"]
+    environment:
+      MYSQL_DATABASE: lux
+      MYSQL_USER: lux
+      MYSQL_PASSWORD: ${LUX_DB_PASSWORD:?Set LUX_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${LUX_MYSQL_PASSWORD:?Set LUX_MYSQL_PASSWORD}
+      MYSQL_ROOT_HOST: "%"
+      TZ: UTC
+    ports:
+      - "127.0.0.1:${LUX_MYSQL_PORT:-13306}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql-init.sql:/docker-entrypoint-initdb.d/10-lux-connector.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=$$MYSQL_ROOT_PASSWORD mysql --host=127.0.0.1 --user=root --batch --skip-column-names --execute='SELECT 1' > /dev/null"]
+      interval: 5s
+      timeout: 3s
+      start_period: 20s
+      retries: 30
+    stop_grace_period: 30s
+
+  kafka:
+    image: lux-kafka:local
+    pull_policy: build
+    build:
+      context: ./kafka
+    init: true
+    mem_limit: 384m
+    labels: *owner-labels
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://:9092,EXTERNAL://:9094,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://127.0.0.1:${LUX_KAFKA_PORT:-19092}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_MESSAGE_MAX_BYTES: 33554432
+      KAFKA_REPLICA_FETCH_MAX_BYTES: 33554432
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    ports:
+      - "127.0.0.1:${LUX_KAFKA_PORT:-19092}:9094"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+      - kafka-config:/mnt/shared/config
+      - kafka-secrets:/etc/kafka/secrets
+    healthcheck:
+      test: ["CMD", "/bin/bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9092"]
+      interval: 5s
+      timeout: 3s
+      start_period: 10s
+      retries: 30
+    stop_grace_period: 30s
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.47
+    init: true
+    mem_limit: 256m
+    labels: *owner-labels
+    command: ["mini", "-dir=/data", "-ip=seaweedfs", "-ip.bind=0.0.0.0", "-s3.port=8333"]
+    environment:
+      AWS_ACCESS_KEY_ID: ${LUX_S3_ACCESS_KEY:?Set LUX_S3_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${LUX_S3_SECRET_KEY:?Set LUX_S3_SECRET_KEY}
+      S3_BUCKET: ${LUX_S3_BUCKET:-lux-assets}
+    ports:
+      - "127.0.0.1:${LUX_S3_PORT:-18333}:8333"
+    volumes:
+      - s3-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "test \"$$(curl --max-time 2 --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:8333/)\" = 403"]
+      interval: 5s
+      timeout: 3s
+      start_period: 5s
+      retries: 30
+    stop_grace_period: 30s
+
+  java-backend:
+    image: lux-java-backend:local
+    pull_policy: build
+    build:
+      context: ../..
+    init: true
+    mem_limit: 512m
+    labels: *owner-labels
+    environment:
+      JAVA_TOOL_OPTIONS: -Xms64m -Xmx256m
+      LUX_BIND_ADDRESS: 0.0.0.0
+      LUX_DB_URL: jdbc:mysql://mysql:3306/${LUX_BACKEND_DATABASE:-lux}?connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true
+      LUX_DB_USER: lux
+      LUX_DB_PASSWORD: ${LUX_DB_PASSWORD:?Set LUX_DB_PASSWORD}
+      LUX_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      LUX_AGENT_BASE_URL: http://agent:8000
+      LUX_STORAGE_PROVIDER: s3
+      LUX_STORAGE_ROOT: /var/lib/lux-backend/assets
+      LUX_STORAGE_STAGING_ROOT: /var/lib/lux-backend/staging
+      LUX_S3_ENDPOINT: http://seaweedfs:8333
+      LUX_S3_BUCKET: ${LUX_S3_BUCKET:-lux-assets}
+      LUX_S3_ACCESS_KEY: ${LUX_S3_ACCESS_KEY:?Set LUX_S3_ACCESS_KEY}
+      LUX_S3_SECRET_KEY: ${LUX_S3_SECRET_KEY:?Set LUX_S3_SECRET_KEY}
+      LUX_BYTEPLUS_GENERATION_ENABLED: "false"
+    ports:
+      - "127.0.0.1:${LUX_BACKEND_PORT:-18080}:8080"
+    volumes:
+      - backend-data:/var/lib/lux-backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--max-time", "2", "http://127.0.0.1:8080/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      start_period: 30s
+      retries: 30
+    stop_grace_period: 90s
+
+  agent:
+    image: lux-python-agent:local
+    pull_policy: build
+    build:
+      context: ../../../lux-python-agent
+    init: true
+    mem_limit: 384m
+    labels: *owner-labels
+    environment:
+      LUX_AGENT_STORE: /var/lib/lux-agent/agent-v2.sqlite3
+      LUX_BACKEND_URL: http://java-backend:8080
+      LUX_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      LUX_KAFKA_GROUP_ID: lux-agent-v2
+      LUX_OPENAI_ENABLED: "false"
+      LUX_AGENT_MEDIA_OBSERVATION_ENABLED: "true"
+    ports:
+      - "127.0.0.1:${LUX_AGENT_PORT:-18000}:8000"
+    volumes:
+      - agent-data:/var/lib/lux-agent
+    depends_on:
+      java-backend:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).read()"]
+      interval: 5s
+      timeout: 3s
+      start_period: 10s
+      retries: 30
+    stop_grace_period: 60s
+
+  model-connector:
+    image: lux-python-model-connector:local
+    pull_policy: build
+    build:
+      context: ../../../lux-python-model-connector
+    init: true
+    mem_limit: 256m
+    labels: *owner-labels
+    environment:
+      LUX_CONNECTOR_MYSQL_DSN: mysql://lux:${LUX_DB_PASSWORD:?Set LUX_DB_PASSWORD}@mysql:3306/${LUX_CONNECTOR_DATABASE:-lux_connector}
+      LUX_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      LUX_CONNECTOR_KAFKA_GROUP_ID: lux-model-connector-v2
+      LUX_BACKEND_URL: http://java-backend:8080
+      LUX_CONNECTOR_PROVIDER_EXECUTION_ENABLED: "false"
+      LUX_CONNECTOR_RESULT_BASE_URL: http://model-connector:8001
+      LUX_CONNECTOR_S3_ENDPOINT_URL: http://seaweedfs:8333
+      LUX_CONNECTOR_S3_BUCKET: ${LUX_S3_BUCKET:-lux-assets}
+      LUX_CONNECTOR_S3_ACCESS_KEY_ID: ${LUX_S3_ACCESS_KEY:?Set LUX_S3_ACCESS_KEY}
+      LUX_CONNECTOR_S3_SECRET_ACCESS_KEY: ${LUX_S3_SECRET_KEY:?Set LUX_S3_SECRET_KEY}
+    ports:
+      - "127.0.0.1:${LUX_CONNECTOR_PORT:-18001}:8001"
+    depends_on:
+      java-backend:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=2).read()"]
+      interval: 5s
+      timeout: 3s
+      start_period: 10s
+      retries: 30
+    stop_grace_period: 60s
+
+volumes:
+  mysql-data:
+    labels: *owner-labels
+  kafka-data:
+    labels: *owner-labels
+  kafka-config:
+    labels: *owner-labels
+  kafka-secrets:
+    labels: *owner-labels
+  s3-data:
+    labels: *owner-labels
+  backend-data:
+    labels: *owner-labels
+  agent-data:
+    labels: *owner-labels
+
+networks:
+  default:
+    labels: *owner-labels

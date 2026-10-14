@@ -1,0 +1,704 @@
+[
+  {
+    "name": "empty model catalog",
+    "value": {
+      "type": "model_catalog_snapshot",
+      "catalog_revision": 1,
+      "models": [],
+      "submission_policy": {
+        "maximum_tasks_per_submission": 32
+      }
+    }
+  },
+  {
+    "name": "get_model_catalog",
+    "value": {
+      "type": "generation_plan_tool_invocation",
+      "operation_id": "00000000-0000-0000-0000-000000000010",
+      "session_id": "00000000-0000-0000-0000-000000000002",
+      "tool_name": "get_model_catalog",
+      "arguments": {
+        "media_type": null
+      }
+    }
+  },
+  {
+    "name": "read_generation_plan",
+    "value": {
+      "type": "generation_plan_tool_invocation",
+      "operation_id": "00000000-0000-0000-0000-000000000011",
+      "session_id": "00000000-0000-0000-0000-000000000002",
+      "tool_name": "read_generation_plan",
+      "arguments": {
+        "query": {
+          "type": "focused"
+        }
+      }
+    }
+  },
+  {
+    "name": "create_generation_plan",
+    "value": {
+      "type": "generation_plan_tool_invocation",
+      "operation_id": "00000000-0000-0000-0000-000000000012",
+      "session_id": "00000000-0000-0000-0000-000000000002",
+      "tool_name": "create_generation_plan",
+      "arguments": {
+        "target": {
+          "media_type": "VIDEO",
+          "model_choice": null
+        },
+        "intent": {
+          "type": "video_intent",
+          "description": "Three ten-second vertical videos of a cat looking out of a window.",
+          "requirements": {
+            "type": "video_requirements",
+            "prompt": null,
+            "size": {
+              "type": "ratio_size",
+              "aspect_ratio": {
+                "width_units": 9,
+                "height_units": 16
+              },
+              "resolution_id": null
+            },
+            "references": null,
+            "output_format": null,
+            "duration_seconds": 10,
+            "generate_audio": null,
+            "generation_mode": null,
+            "requested_file_count": 3
+          }
+        },
+        "parameters": {
+          "type": "video_parameters",
+          "prompt": null,
+          "size": null,
+          "references": [],
+          "output_format": null,
+          "duration_seconds": null,
+          "generate_audio": null
+        },
+        "expected_focus_revision": 0
+      }
+    }
+  },
+  {
+    "name": "update_generation_plan",
+    "value": {
+      "type": "generation_plan_tool_invocation",
+      "operation_id": "00000000-0000-0000-0000-000000000013",
+      "session_id": "00000000-0000-0000-0000-000000000002",
+      "tool_name": "update_generation_plan",
+      "arguments": {
+        "plan_id": "00000000-0000-0000-0000-000000000003",
+        "expected_plan_revision": 1,
+        "expected_focus_revision": 1,
+        "patch": {
+          "type": "video_plan_patch",
+          "description": {
+            "op": "KEEP"
+          },
+          "requirements": {
+            "prompt": {
+              "op": "KEEP"
+            },
+            "size": {
+              "op": "KEEP"
+            },
+            "references": {
+              "op": "KEEP"
+            },
+            "output_format": {
+              "op": "KEEP"
+            },
+            "duration_seconds": {
+              "op": "KEEP"
+            },
+            "generate_audio": {
+              "op": "KEEP"
+            },
+            "generation_mode": {
+              "op": "KEEP"
+            },
+            "requested_file_count": {
+              "op": "KEEP"
+            }
+          },
+          "parameters": {
+            "prompt": {
+              "op": "SET",
+              "value": "A cat looks out of a window as the camera moves slowly forward."
+            },
+            "size": {
+              "op": "KEEP"
+            },
+            "references": {
+              "op": "KEEP"
+            },
+            "output_format": {
+              "op": "KEEP"
+            },
+            "duration_seconds": {
+              "op": "KEEP"
+            },
+            "generate_audio": {
+              "op": "KEEP"
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "change_generation_target",
+    "value": {
+      "type": "generation_plan_tool_invocation",
+      "operation_id": "00000000-0000-0000-0000-000000000014",
+      "session_id": "00000000-0000-0000-0000-000000000002",
+      "tool_name": "change_generation_target",
+      "arguments": {
+        "plan_id": "00000000-0000-0000-0000-000000000003",
+        "expected_plan_revision": 1,
+        "expected_focus_revision": 1,
+        "target": {
+          "media_type": "IMAGE",
+          "model_choice": null
+        }
+      }
+    }
+  },
+  {
+    "name": "clone_generation_plan",
+    "value": {
+      "type": "generation_plan_tool_invocation",
+      "operation_id": "00000000-0000-0000-0000-000000000015",
+      "session_id": "00000000-0000-0000-0000-000000000002",
+      "tool_name": "clone_generation_plan",
+      "arguments": {
+        "source_plan_id": "00000000-0000-0000-0000-000000000003",
+        "expected_source_plan_revision": 2,
+        "expected_focus_revision": 1
+      }
+    }
+  },
+  {
+    "name": "focus_generation_plan",
+    "value": {
+      "type": "generation_plan_tool_invocation",
+      "operation_id": "00000000-0000-0000-0000-000000000016",
+      "session_id": "00000000-0000-0000-0000-000000000002",
+      "tool_name": "focus_generation_plan",
+      "arguments": {
+        "plan_id": "00000000-0000-0000-0000-000000000003",
+        "expected_focus_revision": 0
+      }
+    }
+  },
+  {
+    "name": "submit_generation_plan",
+    "value": {
+      "type": "generation_plan_tool_invocation",
+      "operation_id": "00000000-0000-0000-0000-000000000017",
+      "session_id": "00000000-0000-0000-0000-000000000002",
+      "tool_name": "submit_generation_plan",
+      "arguments": {
+        "plan_id": "00000000-0000-0000-0000-000000000003",
+        "expected_plan_revision": 2,
+        "expected_focus_revision": 1
+      }
+    }
+  },
+  {
+    "name": "draft before model selection",
+    "value": {
+      "type": "generation_plan",
+      "schema_version": 1,
+      "id": "00000000-0000-0000-0000-000000000003",
+      "user_id": "00000000-0000-0000-0000-000000000001",
+      "session_id": "00000000-0000-0000-0000-000000000002",
+      "revision": 1,
+      "state": "DRAFT",
+      "configuration": {
+        "type": "video_plan_configuration",
+        "model_selection": null,
+        "intent": {
+          "type": "video_intent",
+          "description": "A ten second vertical video of a cat looking out of a window.",
+          "requirements": {
+            "type": "video_requirements",
+            "prompt": null,
+            "size": {
+              "type": "ratio_size",
+              "aspect_ratio": {
+                "width_units": 9,
+                "height_units": 16
+              },
+              "resolution_id": null
+            },
+            "references": null,
+            "output_format": null,
+            "duration_seconds": 10,
+            "generate_audio": null,
+            "generation_mode": null,
+            "requested_file_count": null
+          }
+        },
+        "parameters": {
+          "type": "video_parameters",
+          "prompt": null,
+          "size": {
+            "type": "ratio_size",
+            "aspect_ratio": {
+              "width_units": 9,
+              "height_units": 16
+            },
+            "resolution_id": null
+          },
+          "references": [],
+          "output_format": null,
+          "duration_seconds": 10,
+          "generate_audio": null
+        },
+        "parameter_origins": [
+          {
+            "field": "ASPECT_RATIO",
+            "source": "EXPLICIT",
+            "source_model": null
+          },
+          {
+            "field": "DURATION_SECONDS",
+            "source": "EXPLICIT",
+            "source_model": null
+          }
+        ]
+      },
+      "frozen_request": null,
+      "created_at": "2026-10-12T12:00:00.000000Z",
+      "updated_at": "2026-10-12T12:00:00.000000Z",
+      "frozen_at": null
+    }
+  },
+  {
+    "name": "image request shape only, unregistered model",
+    "value": {
+      "request_type": "image_generation_plan_v1",
+      "schema_version": 1,
+      "model_selection": {
+        "model_id": "unregistered-schema-example",
+        "profile_id": "schema-shape-only",
+        "capability_revision": 1
+      },
+      "provider_binding": {
+        "provider_id": "unregistered-schema-provider",
+        "provider_model_id": "unregistered-provider-model",
+        "adapter_id": "unregistered-schema-image.v1"
+      },
+      "parameters": {
+        "type": "image_execution_parameters",
+        "prompt": "An illustrated cat looking out of a window.",
+        "size": {
+          "type": "resolved_preset_size",
+          "preset": {
+            "preset_id": "schema-square",
+            "aspect_ratio": {
+              "width_units": 1,
+              "height_units": 1
+            },
+            "resolution_id": "schema-image-resolution",
+            "pixel_dimensions": {
+              "width": 1024,
+              "height": 1024
+            }
+          }
+        },
+        "references": [],
+        "output_format": "PNG",
+        "generation_mode": "IMAGE"
+      },
+      "result_expectations": {
+        "type": "image_result_expectations",
+        "size": {
+          "type": "resolved_preset_size",
+          "preset": {
+            "preset_id": "schema-square",
+            "aspect_ratio": {
+              "width_units": 1,
+              "height_units": 1
+            },
+            "resolution_id": "schema-image-resolution",
+            "pixel_dimensions": {
+              "width": 1024,
+              "height": 1024
+            }
+          }
+        },
+        "output_format": "PNG",
+        "file_count": 1
+      }
+    }
+  },
+  {
+    "name": "video request shape only, unregistered model",
+    "value": {
+      "request_type": "video_generation_plan_v1",
+      "schema_version": 1,
+      "model_selection": {
+        "model_id": "unregistered-schema-example",
+        "profile_id": "schema-shape-only",
+        "capability_revision": 1
+      },
+      "provider_binding": {
+        "provider_id": "unregistered-schema-provider",
+        "provider_model_id": "unregistered-provider-model",
+        "adapter_id": "unregistered-schema-video.v1"
+      },
+      "parameters": {
+        "type": "video_execution_parameters",
+        "prompt": "A cat looks out of a window as the camera moves forward.",
+        "size": {
+          "type": "resolved_preset_size",
+          "preset": {
+            "preset_id": "schema-vertical",
+            "aspect_ratio": {
+              "width_units": 9,
+              "height_units": 16
+            },
+            "resolution_id": "schema-video-resolution",
+            "pixel_dimensions": {
+              "width": 720,
+              "height": 1280
+            }
+          }
+        },
+        "references": [],
+        "output_format": "MP4",
+        "generation_mode": "VIDEO",
+        "duration_seconds": 10,
+        "generate_audio": false
+      },
+      "result_expectations": {
+        "type": "video_result_expectations",
+        "size": {
+          "type": "resolved_preset_size",
+          "preset": {
+            "preset_id": "schema-vertical",
+            "aspect_ratio": {
+              "width_units": 9,
+              "height_units": 16
+            },
+            "resolution_id": "schema-video-resolution",
+            "pixel_dimensions": {
+              "width": 720,
+              "height": 1280
+            }
+          }
+        },
+        "output_format": "MP4",
+        "duration_seconds": 10,
+        "duration_tolerance_milliseconds": 0,
+        "expected_audio": false,
+        "file_count": 1
+      }
+    }
+  },
+  {
+    "name": "frozen image plan shape only, unregistered model",
+    "value": {
+      "type": "generation_plan",
+      "schema_version": 1,
+      "id": "00000000-0000-0000-0000-000000000003",
+      "user_id": "00000000-0000-0000-0000-000000000001",
+      "session_id": "00000000-0000-0000-0000-000000000002",
+      "revision": 2,
+      "state": "FROZEN",
+      "configuration": {
+        "type": "image_plan_configuration",
+        "model_selection": {
+          "model_id": "unregistered-schema-example",
+          "profile_id": "schema-shape-only",
+          "capability_revision": 1
+        },
+        "intent": {
+          "type": "image_intent",
+          "description": "An illustrated cat by a window.",
+          "requirements": {
+            "type": "image_requirements",
+            "prompt": null,
+            "size": null,
+            "references": null,
+            "output_format": null,
+            "generation_mode": null,
+            "requested_file_count": null
+          }
+        },
+        "parameters": {
+          "type": "image_parameters",
+          "prompt": "An illustrated cat looking out of a window.",
+          "size": {
+            "type": "ratio_size",
+            "aspect_ratio": {
+              "width_units": 1,
+              "height_units": 1
+            },
+            "resolution_id": "schema-image-resolution"
+          },
+          "references": [],
+          "output_format": "PNG"
+        },
+        "parameter_origins": [
+          {
+            "field": "PROMPT",
+            "source": "EXPLICIT",
+            "source_model": null
+          },
+          {
+            "field": "ASPECT_RATIO",
+            "source": "EXPLICIT",
+            "source_model": null
+          },
+          {
+            "field": "RESOLUTION_ID",
+            "source": "EXPLICIT",
+            "source_model": null
+          },
+          {
+            "field": "OUTPUT_FORMAT",
+            "source": "EXPLICIT",
+            "source_model": null
+          }
+        ]
+      },
+      "frozen_request": {
+        "request_type": "image_generation_plan_v1",
+        "schema_version": 1,
+        "model_selection": {
+          "model_id": "unregistered-schema-example",
+          "profile_id": "schema-shape-only",
+          "capability_revision": 1
+        },
+        "provider_binding": {
+          "provider_id": "unregistered-schema-provider",
+          "provider_model_id": "unregistered-provider-model",
+          "adapter_id": "unregistered-schema-image.v1"
+        },
+        "parameters": {
+          "type": "image_execution_parameters",
+          "prompt": "An illustrated cat looking out of a window.",
+          "size": {
+            "type": "resolved_preset_size",
+            "preset": {
+              "preset_id": "schema-square",
+              "aspect_ratio": {
+                "width_units": 1,
+                "height_units": 1
+              },
+              "resolution_id": "schema-image-resolution",
+              "pixel_dimensions": {
+                "width": 1024,
+                "height": 1024
+              }
+            }
+          },
+          "references": [],
+          "output_format": "PNG",
+          "generation_mode": "IMAGE"
+        },
+        "result_expectations": {
+          "type": "image_result_expectations",
+          "size": {
+            "type": "resolved_preset_size",
+            "preset": {
+              "preset_id": "schema-square",
+              "aspect_ratio": {
+                "width_units": 1,
+                "height_units": 1
+              },
+              "resolution_id": "schema-image-resolution",
+              "pixel_dimensions": {
+                "width": 1024,
+                "height": 1024
+              }
+            }
+          },
+          "output_format": "PNG",
+          "file_count": 1
+        }
+      },
+      "created_at": "2026-10-12T12:00:00.000000Z",
+      "updated_at": "2026-10-12T12:01:00.000000Z",
+      "frozen_at": "2026-10-12T12:01:00.000000Z"
+    }
+  },
+  {
+    "name": "generic non-text reference input shape only, metadata not asserted",
+    "value": {
+      "type": "generation_plan",
+      "schema_version": 1,
+      "id": "00000000-0000-0000-0000-000000000003",
+      "user_id": "00000000-0000-0000-0000-000000000001",
+      "session_id": "00000000-0000-0000-0000-000000000002",
+      "revision": 1,
+      "state": "DRAFT",
+      "configuration": {
+        "type": "video_plan_configuration",
+        "model_selection": null,
+        "intent": {
+          "type": "video_intent",
+          "description": "Create a cat video using the supplied image, video and audio references.",
+          "requirements": {
+            "type": "video_requirements",
+            "prompt": null,
+            "size": {
+              "type": "ratio_size",
+              "aspect_ratio": {
+                "width_units": 9,
+                "height_units": 16
+              },
+              "resolution_id": null
+            },
+            "references": [
+              {
+                "type": "reference_asset",
+                "asset_id": "00000000-0000-0000-0000-000000000041"
+              },
+              {
+                "type": "reference_asset",
+                "asset_id": "00000000-0000-0000-0000-000000000042"
+              },
+              {
+                "type": "reference_asset",
+                "asset_id": "00000000-0000-0000-0000-000000000043"
+              }
+            ],
+            "output_format": null,
+            "duration_seconds": 10,
+            "generate_audio": null,
+            "generation_mode": null,
+            "requested_file_count": null
+          }
+        },
+        "parameters": {
+          "type": "video_parameters",
+          "prompt": null,
+          "size": {
+            "type": "ratio_size",
+            "aspect_ratio": {
+              "width_units": 9,
+              "height_units": 16
+            },
+            "resolution_id": null
+          },
+          "references": [
+            {
+              "type": "reference_asset",
+              "asset_id": "00000000-0000-0000-0000-000000000041"
+            },
+            {
+              "type": "reference_asset",
+              "asset_id": "00000000-0000-0000-0000-000000000042"
+            },
+            {
+              "type": "reference_asset",
+              "asset_id": "00000000-0000-0000-0000-000000000043"
+            }
+          ],
+          "output_format": null,
+          "duration_seconds": 10,
+          "generate_audio": null
+        },
+        "parameter_origins": [
+          {
+            "field": "ASPECT_RATIO",
+            "source": "EXPLICIT",
+            "source_model": null
+          },
+          {
+            "field": "DURATION_SECONDS",
+            "source": "EXPLICIT",
+            "source_model": null
+          },
+          {
+            "field": "REFERENCES",
+            "source": "EXPLICIT",
+            "source_model": null
+          }
+        ]
+      },
+      "frozen_request": null,
+      "created_at": "2026-10-12T12:00:00.000000Z",
+      "updated_at": "2026-10-12T12:00:00.000000Z",
+      "frozen_at": null
+    }
+  },
+  {
+    "name": "single-file submission receipt shape only",
+    "value": {
+      "type": "generation_plan_tool_operation_receipt",
+      "schema_version": 1,
+      "operation_id": "00000000-0000-0000-0000-000000000301",
+      "session_id": "00000000-0000-0000-0000-000000000002",
+      "tool_name": "submit_generation_plan",
+      "request_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "result": {
+        "type": "plan_task_submission_receipt",
+        "plan_id": "00000000-0000-0000-0000-000000000003",
+        "frozen_plan_revision": 2,
+        "accepted": true,
+        "requested_file_count": 1,
+        "tasks": [
+          {
+            "index": 0,
+            "task_id": "00000000-0000-0000-0000-000000000100",
+            "task_operation_id": "00000000-0000-0000-0000-000000000200"
+          }
+        ],
+        "focus": {
+          "session_id": "00000000-0000-0000-0000-000000000002",
+          "active_plan_id": "00000000-0000-0000-0000-000000000003",
+          "revision": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "three-file batch submission receipt shape only",
+    "value": {
+      "type": "generation_plan_tool_operation_receipt",
+      "schema_version": 1,
+      "operation_id": "00000000-0000-0000-0000-000000000302",
+      "session_id": "00000000-0000-0000-0000-000000000002",
+      "tool_name": "submit_generation_plan",
+      "request_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "result": {
+        "type": "plan_task_submission_receipt",
+        "plan_id": "00000000-0000-0000-0000-000000000003",
+        "frozen_plan_revision": 2,
+        "accepted": true,
+        "requested_file_count": 3,
+        "tasks": [
+          {
+            "index": 0,
+            "task_id": "00000000-0000-0000-0000-000000000100",
+            "task_operation_id": "00000000-0000-0000-0000-000000000200"
+          },
+          {
+            "index": 1,
+            "task_id": "00000000-0000-0000-0000-000000000101",
+            "task_operation_id": "00000000-0000-0000-0000-000000000201"
+          },
+          {
+            "index": 2,
+            "task_id": "00000000-0000-0000-0000-000000000102",
+            "task_operation_id": "00000000-0000-0000-0000-000000000202"
+          }
+        ],
+        "focus": {
+          "session_id": "00000000-0000-0000-0000-000000000002",
+          "active_plan_id": "00000000-0000-0000-0000-000000000003",
+          "revision": 1
+        }
+      }
+    }
+  }
+]

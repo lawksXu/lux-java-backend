@@ -1,0 +1,22 @@
+{
+  "schema_version": 2,
+  "event_id": "00000000-0000-0000-0000-000000000501",
+  "event_type": "RUN_SNAPSHOT",
+  "occurred_at": "2026-10-12T09:00:00.123456Z",
+  "user_id": "00000000-0000-0000-0000-000000000001",
+  "session_id": "00000000-0000-0000-0000-000000000010",
+  "event_seq": 1,
+  "body": {
+    "run": {
+      "id": "00000000-0000-0000-0000-000000000200",
+      "run_index": 1
+    },
+    "source_revision": 1,
+    "status": "RUNNING",
+    "started_at": "2026-10-12T09:00:00.123456Z",
+    "finished_at": null,
+    "final_item": null,
+    "error_code": null,
+    "error_message": null
+  }
+}

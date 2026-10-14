@@ -1,0 +1,23 @@
+{
+  "schema_version": 2,
+  "event_id": "00000000-0000-0000-0000-000000000100",
+  "event_type": "INPUT_ACCEPTED",
+  "occurred_at": "2026-10-12T09:00:00.123456Z",
+  "user_id": "00000000-0000-0000-0000-000000000001",
+  "session_id": "00000000-0000-0000-0000-000000000010",
+  "item": {
+    "id": "00000000-0000-0000-0000-000000000100",
+    "sequence_no": 1,
+    "input_sequence_no": 1,
+    "source": "USER",
+    "kind": "MESSAGE",
+    "content": {
+      "blocks": [
+        {
+          "type": "text",
+          "text": "\n  画一只猫 😊\n"
+        }
+      ]
+    }
+  }
+}

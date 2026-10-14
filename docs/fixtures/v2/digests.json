@@ -1,0 +1,26 @@
+[
+  {
+    "filename": "input-accepted.json",
+    "sha256": "8e5ccce224aef0ae7fd2d52a1d4e0f41b4c0658d36a9d77c83ee9f650e456ce0"
+  },
+  {
+    "filename": "item-delta.json",
+    "sha256": "2b578a90d8839e827765bcad210d2bd9686dd17b44e386f962533926e55143d6"
+  },
+  {
+    "filename": "item-start.json",
+    "sha256": "12acd7af63cab532dea83a58087f0b1ef7430336669aa3ff943c56d63cb5b5f9"
+  },
+  {
+    "filename": "model-response-completed.json",
+    "sha256": "7c72a822f168518d830c2ae3ac4a0a3c889fe1c2b4366dba5f205b9eef9430c5"
+  },
+  {
+    "filename": "run-snapshot.json",
+    "sha256": "cf6758653ca09fdecf3e48acc586a61c36ddf2cdd06f9ae427914f5f041ac7a3"
+  },
+  {
+    "filename": "turn-snapshot.json",
+    "sha256": "a8fe18357db49bdf80d70868dc8946b4278bfdeb0f18c44519351d4d555d40f1"
+  }
+]
