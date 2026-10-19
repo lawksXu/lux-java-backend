@@ -9,7 +9,7 @@ serially, then run from the Java checkout with a new private evidence directory:
 
 ```sh
 COMPOSE_PARALLEL_LIMIT=1 docker compose --env-file deploy/local/.env \
-  -f deploy/local/compose.yml build
+  -f deploy/local/compose.yml build kafka java-backend agent model-connector
 ../lux-python-agent/.venv/bin/python scripts/integration/compose_acceptance.py run \
   --directory /private/tmp/lux-compose-acceptance
 ```

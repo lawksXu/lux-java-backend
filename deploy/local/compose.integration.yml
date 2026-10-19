@@ -1,5 +1,7 @@
 # Test-only entrypoints redirect the actual provider SDKs to the local fixture.
 services:
+  frontend:
+    profiles: [frontend]
   java-backend:
     labels:
       lux.integration.owner: ${LUX_INTEGRATION_OWNER:?}

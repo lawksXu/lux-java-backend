@@ -1,11 +1,11 @@
 # Lux local application stack
 
-This is the unified Docker Compose entrypoint for the existing Java, Agent and
-Connector repositories. Each service owns its Dockerfile and dependencies; this
-directory owns application wiring and local middleware. The original root
-`compose.yml` remains a separate middleware-only stack with separate volumes.
+This is the unified Docker Compose entrypoint for the existing Java, Agent,
+Connector and Frontend repositories. Each service owns its Dockerfile and
+dependencies; this directory owns application wiring and local middleware. The
+original root `compose.yml` remains a separate middleware-only stack with separate volumes.
 
-## Run all six services
+## Run all seven services
 
 From `/Users/xuwenjie/lux-java-backend`:
 
@@ -21,8 +21,9 @@ docker compose --env-file deploy/local/.env -f deploy/local/compose.yml down
 
 The `down` command preserves the named data volumes. Keep `.env` private and out
 of Git. Password changes do not alter accounts in an existing MySQL volume.
-The runtime application ports default to Java 18080, Agent 18000 and Connector 18001
-on loopback; MySQL 13306, Kafka 19092 and S3 18333 can be configured independently.
+The runtime application ports default to Frontend 18082, Java 18080, Agent 18000
+and Connector 18001 on loopback; MySQL 13306, Kafka 19092 and S3 18333 can be
+configured independently. Open the Frontend at `http://127.0.0.1:18082`.
 Internal calls always use service DNS and container ports. Real OpenAI and
 BytePlus execution are disabled and no provider keys are included. Without an
 executor, submitted Agent input receives the existing `MODEL_NOT_CONFIGURED`
@@ -53,20 +54,117 @@ Build and run only one full test stack at a time on the current approximately
 3.8 GiB Docker VM. `COMPOSE_PARALLEL_LIMIT=1` serializes service builds; each
 service has an explicit runtime memory limit.
 
+## Production frontend container
+
+Keep `lux-frontend` beside the three existing service repositories. Its Dockerfile
+builds the React application with Node 22 and serves the resulting static files
+through Nginx as a non-root user. The runtime filesystem is read-only; temporary
+Nginx files use the bounded `/tmp` mount. The container receives no provider keys
+or backend credentials.
+
+The browser uses same-origin `/api` requests. Nginx forwards them to
+`http://java-backend:8080`, including SSE without response buffering, large
+attachment uploads and media byte-range responses. The Java host port does not
+affect this internal route. `/health` checks the frontend server; Java readiness
+is checked separately before Compose starts the frontend. This container replaces
+the development Vite server for normal Compose use.
+
+To add or rebuild only the frontend in an existing `lux-dev` stack that uses
+generated extras and private provider configuration, run from the Java checkout:
+
+```sh
+COMPOSE_PARALLEL_LIMIT=1 docker compose -p lux-dev \
+  --env-file deploy/local/.env --env-file deploy/local/.env.providers \
+  -f deploy/local/compose.yml \
+  -f target/local-stack/compose.extras.yml \
+  -f deploy/local/.env.providers.compose.yml \
+  build frontend
+docker compose -p lux-dev \
+  --env-file deploy/local/.env --env-file deploy/local/.env.providers \
+  -f deploy/local/compose.yml \
+  -f target/local-stack/compose.extras.yml \
+  -f deploy/local/.env.providers.compose.yml \
+  up -d --no-build --pull never --no-deps frontend
+```
+
+Reuse the current project's name and Compose files. Omit the generated extras
+line if that stack does not use them, and omit both private provider file
+arguments when real providers are disabled. The frontend-only commands leave
+the running application services and their data volumes in place. Configure
+`LUX_FRONTEND_PORT` in the private base env file to change the loopback port.
+The generated extras can add Redis to the seven-service base stack.
+
+## Enable real providers in the existing local stack
+
+Real OpenAI and BytePlus calls can incur charges. The base Compose file keeps
+execution disabled; enable it with private files instead of editing that default.
+Create `deploy/local/.env.providers` and
+`deploy/local/.env.providers.compose.yml` with mode `0600`. Both paths are ignored
+by Git. Set the following variables in `.env.providers`, supplying the keys
+privately:
+
+```dotenv
+OPENAI_API_KEY=
+LUX_BYTEPLUS_API_KEY=
+LUX_OPENAI_ENABLED=true
+LUX_CONNECTOR_PROVIDER_EXECUTION_ENABLED=true
+LUX_BYTEPLUS_GENERATION_ENABLED=true
+```
+
+Use this content for `.env.providers.compose.yml`:
+
+```yaml
+services:
+  java-backend:
+    environment:
+      LUX_BYTEPLUS_GENERATION_ENABLED: ${LUX_BYTEPLUS_GENERATION_ENABLED:-false}
+  agent:
+    environment:
+      LUX_OPENAI_ENABLED: ${LUX_OPENAI_ENABLED:-false}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?Set OPENAI_API_KEY}
+  model-connector:
+    environment:
+      LUX_CONNECTOR_PROVIDER_EXECUTION_ENABLED: ${LUX_CONNECTOR_PROVIDER_EXECUTION_ENABLED:-false}
+      LUX_BYTEPLUS_API_KEY: ${LUX_BYTEPLUS_API_KEY:?Set LUX_BYTEPLUS_API_KEY}
+```
+
+From the repository root, recreate only the three application services using the
+existing local images and the same `lux-dev` project:
+
+```sh
+COMPOSE_PARALLEL_LIMIT=1 docker compose -p lux-dev \
+  --env-file deploy/local/.env --env-file deploy/local/.env.providers \
+  -f deploy/local/compose.yml \
+  -f target/local-stack/compose.extras.yml \
+  -f deploy/local/.env.providers.compose.yml \
+  up -d --no-build --pull never --no-deps java-backend agent model-connector
+```
+
+Keep `target/local-stack/compose.extras.yml` when it was used to start the current
+stack; omit that line for a stack originally started without generated extras.
+Reuse the original project name if it differs from `lux-dev`. This command leaves
+middleware services and data volumes in place. Do not reset volumes to apply keys.
+Enabling the Connector starts its provider worker and can process eligible
+persisted Tasks. Reconcile an uncertain provider submission using its original
+IDs before considering another submission. Healthchecks establish service
+readiness; an actual request is needed to verify provider account access.
+
 ## Deterministic complete container acceptance
 
 Build the current images serially, then use a fresh private artifact directory:
 
 ```sh
 COMPOSE_PARALLEL_LIMIT=1 docker compose --env-file deploy/local/.env \
-  -f deploy/local/compose.yml build
+  -f deploy/local/compose.yml build kafka java-backend agent model-connector
 ../lux-python-agent/.venv/bin/python scripts/integration/compose_acceptance.py run \
   --directory /private/tmp/lux-compose-acceptance
 ```
 
 The driver uses this Compose model plus `compose.integration.yml` with a unique
 project, private generated credentials, UUID schemas, owned volumes and a local
-provider fixture. All three business services and middleware run as containers.
+provider fixture. The override keeps the frontend behind the optional `frontend`
+profile, preserving the existing eight-service acceptance model without requiring
+the frontend checkout. All three business services and middleware run as containers.
 Only model/provider HTTP is substituted; production SDK clients, workers,
 persistence and Kafka/S3 adapters still execute. No host business process or
 Docker socket mount is used. The host driver sends test HTTP and issues

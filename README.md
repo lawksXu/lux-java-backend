@@ -33,11 +33,11 @@ Only Actuator health endpoints are exposed. Every business and internal HTTP rou
 
 Stop containers with `docker compose stop`. Preserve the named volumes and any legacy asset directory together when backing up local data. Do not delete the SeaweedFS volume or legacy files during the storage transition.
 
-For all three business services and middleware as containers, use the separate
-[unified local Compose entrypoint](deploy/local/README.md). It builds the Java,
-Agent and Connector images from their existing sibling repositories and uses
-service DNS, persistent volumes and runtime memory limits. The root Compose
-above remains the middleware-only stack. Real model/provider execution defaults
+For the frontend, all three business services and middleware as containers, use
+the separate [unified local Compose entrypoint](deploy/local/README.md). It builds
+the Java, Agent, Connector and Frontend images from their existing sibling
+repositories and uses service DNS, persistent volumes and runtime memory limits.
+The root Compose above remains the middleware-only stack. Real model/provider execution defaults
 disabled; the integration override supplies local HTTP fixtures for complete
 container acceptance without API keys.
 The [container acceptance report](docs/superpowers/plans/2026-10-13-compose-container-integration-report.md)
